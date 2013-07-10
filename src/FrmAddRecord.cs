@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Windows.Forms;
 
 namespace RegularGlossary
@@ -18,28 +19,26 @@ namespace RegularGlossary
             }
             else
             {
-                Dbcontrol dbc01 = new Dbcontrol();
-                string strEx;
+                Dbcontrol dbHelper = new Dbcontrol();
                 if (rdoSingle.Checked)
                 {
-                    strEx = "insert into [sheet1$] (名称,解释) VALUES('" + txtName.Text.Trim() + "','" + txtExplain.Text.Trim() + "')";
-                    MessageBox.Show(dbc01.ReExNum(strEx) > 0 ? "添加成功！" : "添加失败！");
+                    string strEx = "insert into [sheet1$] (名称,解释) VALUES('" + txtName.Text.Trim() + "','" + txtExplain.Text.Trim() + "')";
+                    MessageBox.Show(dbHelper.ReExNum(strEx) > 0 ? "添加成功！" : "添加失败！");
                 }
                 else
                 {
-                    int succNum = 0;
-                    string[] charSplit = { "\r\n" };
-                    string[] strContFirst = txtExplain.Text.Split(charSplit, StringSplitOptions.None);
-                    for (int i = 0; i < strContFirst.Length - 1; i++)
+                    string[] charSplit = { "\n" };
+                    char entrySeparator = txtName.Text[0];
+                    string[] entries = txtExplain.Text.Trim().Replace("\r", "").Split(charSplit, StringSplitOptions.None);
+                    int succeedCount = 0;
+                    foreach (var item in entries)
                     {
-                        string[] strContSecond = strContFirst[i].Split(txtName.Text[0]);
-                        strEx = "insert into [sheet1$] (名称,解释) VALUES('" + strContSecond[0] + "','" + strContSecond[1] + "')";
-                        if (dbc01.ReExNum(strEx) > 0)
-                        {
-                            succNum += 1;
-                        }
+                        string[] data = item.Split(entrySeparator);
+                        if (data.Length < 2)
+                            continue;
+                        succeedCount += dbHelper.ReExNum(string.Format("insert into [sheet1$] (名称,解释) VALUES('{0}','{1}');", data[0], data[1]));
                     }
-                    MessageBox.Show("成功添加了【" + succNum + "】条记录。", "成功提示");
+                    MessageBox.Show("成功添加了【" + succeedCount + "】条记录。", "成功提示");
                 }
                 ClearForm();
             }
@@ -53,9 +52,7 @@ namespace RegularGlossary
 
         private void btnClear_Click(object sender, EventArgs e)
         {
-
             ClearForm();
-
         }
         protected void ClearForm()
         {
@@ -86,6 +83,5 @@ namespace RegularGlossary
                 ttMain.SetToolTip(txtExplain, "一行一条记录");
             }
         }
-
     }
 }
